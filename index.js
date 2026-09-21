@@ -1,7 +1,7 @@
 const mineflayer = require('mineflayer');
 const express = require('express');
 
-// Servidor HTTP para Render
+// 1. Servidor HTTP para evitar el timeout en Render
 const app = express();
 app.get('/', (req, res) => res.send('Bot Botsitouu 24/7 activo'));
 app.listen(process.env.PORT || 3000, () => {
@@ -14,7 +14,9 @@ function startBot() {
   const bot = mineflayer.createBot({
     host: 'vortemc.play.hosting',
     port: 25565,
-    username: 'Botsitouu'
+    username: 'Botsitouu',
+    // Desactiva el cálculo de física interna que satura el tick de red
+    physicsEnabled: false 
   });
 
   bot.on('spawn', () => {
@@ -26,7 +28,7 @@ function startBot() {
     }, 3000);
   });
 
-  // Autenticación por chat
+  // Manejo de autenticación en chat
   bot.on('messagestr', (message) => {
     if (message.includes('/register')) {
       bot.chat('/register botafk2926 botafk2926');
@@ -35,14 +37,14 @@ function startBot() {
     }
   });
 
-  // Movimiento básico cada 45 segundos (evita saturar paquetes de red)
+  // Mantiene la sesión viva balanceando el brazo suavemente cada 60 segundos
   const activityInterval = setInterval(() => {
-    if (bot && bot.entity) {
+    if (bot) {
       bot.swingArm('right');
     }
-  }, 45000);
+  }, 60000);
 
-  // Reconexión limpia si se interrumpe la red
+  // Manejo de desconexiones
   bot.on('end', (reason) => {
     console.log(`Conexión cerrada (${reason}). Reintentando en 30 segundos...`);
     clearInterval(activityInterval);
