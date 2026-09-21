@@ -1,7 +1,7 @@
 const mineflayer = require('mineflayer');
 const express = require('express');
 
-// 1. Servidor web HTTP para binding de puerto en Render (evita el port timeout)
+// 1. Servidor web HTTP para Render
 const app = express();
 app.get('/', (req, res) => res.send('Bot Botsitouu 24/7 activo'));
 app.listen(process.env.PORT || 3000, () => {
@@ -14,40 +14,42 @@ function startBot() {
   const bot = mineflayer.createBot({
     host: 'vortemc.play.hosting',
     port: 25565,
-    username: 'Botsitouu'
+    username: 'Botsitouu',
+    physicsEnabled: false // Desactiva físicas locales para evitar alertas de movimiento
   });
 
-  // Al ingresar exitosamente al servidor
+  // Control para evitar enviar el comando de login más de una vez por sesión
+  let hasLoggedIn = false;
+
   bot.on('spawn', () => {
     console.log('¡Botsitouu ha ingresado al servidor!');
     
-    // Autenticación automática tras 3 segundos
+    // Login automático único a los 4 segundos de ingresar
     setTimeout(() => {
-      bot.chat('/login botafk2926');
-    }, 3000);
-  });
-
-  // Intercepción de mensajes del chat para LoginPlus
-  bot.on('messagestr', (message) => {
-    if (message.includes('/register')) {
-      bot.chat('/register botafk2926 botafk2926');
-    } else if (message.includes('/login')) {
-      bot.chat('/login botafk2926');
-    }
-  });
-
-  // Envío del paquete de fin de tick para mitigar las alertas de TickTimer en GrimAC
-  bot.on('physicsTick', () => {
-    if (bot._client && bot._client.write) {
-      try {
-        bot._client.write('tick_end', {});
-      } catch (err) {
-        // Ignora si la versión de protocolo no admite el paquete
+      if (!hasLoggedIn) {
+        bot.chat('/login botafk2926');
+        hasLoggedIn = true;
       }
+    }, 4000);
+  });
+
+  // Intercepción del chat para LoginPlus y Autorespuesta de Discord
+  bot.on('messagestr', (message) => {
+    const msg = message.toLowerCase();
+
+    // Gestión de LoginPlus
+    if (msg.includes('/register') && !hasLoggedIn) {
+      bot.chat('/register botafk2926 botafk2926');
+      hasLoggedIn = true;
+    }
+
+    // Autorespuesta de Discord
+    if (msg.includes('discord')) {
+      bot.chat('¡Únete a nuestro Discord!: https://discord.gg/bMTrjug9Ju');
     }
   });
 
-  // Acción periódica cada 30 segundos (simula actividad básica sin saltar)
+  // Acción periódica cada 30 segundos (mantiene la sesión activa)
   const activityInterval = setInterval(() => {
     if (bot && bot.entity) {
       bot.swingArm('right');
@@ -57,11 +59,14 @@ function startBot() {
     }
   }, 30000);
 
-  // Control de desconexión y bucle de reconexión
+  // Control de desconexión y prevención de bloqueo de IP (10 min si hay bloqueo)
   bot.on('end', (reason) => {
-    console.log(`Conexión finalizada (${reason}). Reintentando en 30 segundos...`);
+    console.log(`Conexión finalizada (${reason}). Reintentando...`);
     clearInterval(activityInterval);
-    setTimeout(startBot, 30000);
+    hasLoggedIn = false;
+    
+    const delay = (reason && (reason.includes('blocked') || reason.includes('logins'))) ? 600000 : 35000;
+    setTimeout(startBot, delay);
   });
 
   bot.on('kicked', (reason) => {
