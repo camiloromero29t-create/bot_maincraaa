@@ -15,30 +15,50 @@ function startBot() {
     host: 'vortemc.play.hosting',
     port: 25565,
     username: 'Botsitouu',
-    // Desactiva la física propia de Mineflayer para no distorsionar los paquetes de movimiento
-    physicsEnabled: false
+    physicsEnabled: false // Desactiva la física propia para no distorsionar los paquetes de movimiento
   });
 
-  // Al ingresar exitosamente al servidor
+  // Control para evitar enviar el comando de login más de una vez por sesión
+  let hasLoggedIn = false;
+
   bot.on('spawn', () => {
     console.log('¡Botsitouu ha ingresado al servidor!');
     
-    // Autenticación automática tras 3 segundos
+    // Login automático único a los 4 segundos de ingresar
     setTimeout(() => {
-      bot.chat('/login botafk2926');
-    }, 3000);
+      if (!hasLoggedIn) {
+        bot.chat('/login botafk2926');
+        hasLoggedIn = true;
+      }
+    }, 4000);
   });
 
-  // Intercepción de mensajes del chat para LoginPlus
+  // Intercepción segura del chat para LoginPlus
   bot.on('messagestr', (message) => {
-    if (message.includes('/register')) {
+    if (message.includes('/register') && !hasLoggedIn) {
       bot.chat('/register botafk2926 botafk2926');
-    } else if (message.includes('/login')) {
-      bot.chat('/login botafk2926');
+      hasLoggedIn = true;
     }
   });
 
-  // Acción periódica cada 30 segundos (simula actividad básica sin movimiento físico)
+  // Envío sincronizado a 50 ms (20 TPS de Minecraft)
+  // Previene 'TickTimer' sin saturar la red ni activar 'Timer'[cite: 1, 2]
+  let lastTickSent = 0;
+  bot.on('physicsTick', () => {
+    const now = Date.now();
+    if (now - lastTickSent >= 50) {
+      if (bot._client && bot._client.write) {
+        try {
+          bot._client.write('tick_end', {});
+          lastTickSent = now;
+        } catch (err) {
+          // Ignora si la versión de protocolo no admite el paquete
+        }
+      }
+    }
+  });
+
+  // Acción periódica cada 30 segundos (simula actividad básica)
   const activityInterval = setInterval(() => {
     if (bot && bot.entity) {
       bot.swingArm('right');
@@ -48,11 +68,15 @@ function startBot() {
     }
   }, 30000);
 
-  // Control de desconexión y bucle de reconexión
+  // Control de desconexión y prevención de bloqueo de IP
   bot.on('end', (reason) => {
-    console.log(`Conexión finalizada (${reason}). Reintentando en 30 segundos...`);
+    console.log(`Conexión finalizada (${reason}). Reintentando...`);
     clearInterval(activityInterval);
-    setTimeout(startBot, 30000);
+    hasLoggedIn = false;
+    
+    // Si la IP fue bloqueada por LoginPlus, espera 10 minutos antes de reconectar
+    const delay = (reason && (reason.includes('blocked') || reason.includes('logins'))) ? 600000 : 35000;
+    setTimeout(startBot, delay);
   });
 
   bot.on('kicked', (reason) => {
