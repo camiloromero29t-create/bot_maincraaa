@@ -43,12 +43,6 @@ function startBot() {
       hasLoggedIn = true;
     }
 
-    // Autorespuesta de Discord
-    if (msg.includes('discord')) {
-      bot.chat('¡Únete a nuestro Discord!: https://discord.gg/bMTrjug9Ju');
-    }
-  });
-
   // Acción periódica cada 30 segundos (mantiene la sesión activa)
   const activityInterval = setInterval(() => {
     if (bot && bot.entity) {
