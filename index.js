@@ -1,11 +1,11 @@
 const mineflayer = require('mineflayer');
 const express = require('express');
 
-// 1. Servidor web HTTP para binding de puerto en Render (evita el port timeout)
+// Servidor HTTP para Render
 const app = express();
 app.get('/', (req, res) => res.send('Bot Botsitouu 24/7 activo'));
 app.listen(process.env.PORT || 3000, () => {
-  console.log('Servidor HTTP iniciado correctamente.');
+  console.log('Servidor HTTP listo en Render.');
 });
 
 function startBot() {
@@ -17,17 +17,16 @@ function startBot() {
     username: 'Botsitouu'
   });
 
-  // Al ingresar exitosamente al servidor
   bot.on('spawn', () => {
     console.log('¡Botsitouu ha ingresado al servidor!');
     
-    // Autenticación automática tras 3 segundos
+    // Login automático tras 3 segundos
     setTimeout(() => {
       bot.chat('/login botafk2926');
     }, 3000);
   });
 
-  // Intercepción de mensajes del chat para LoginPlus
+  // Autenticación por chat
   bot.on('messagestr', (message) => {
     if (message.includes('/register')) {
       bot.chat('/register botafk2926 botafk2926');
@@ -36,40 +35,26 @@ function startBot() {
     }
   });
 
-  // Envío del paquete de fin de tick para mitigar las alertas de TickTimer en GrimAC
-  bot.on('physicsTick', () => {
-    if (bot._client && bot._client.write) {
-      try {
-        bot._client.write('tick_end', {});
-      } catch (err) {
-        // Ignora si la versión de protocolo no admite el paquete
-      }
-    }
-  });
-
-  // Acción periódica cada 30 segundos (simula actividad básica sin saltar)
+  // Movimiento básico cada 45 segundos (evita saturar paquetes de red)
   const activityInterval = setInterval(() => {
     if (bot && bot.entity) {
       bot.swingArm('right');
-      const yaw = Math.random() * Math.PI * 2;
-      const pitch = (Math.random() - 0.5) * Math.PI;
-      bot.look(yaw, pitch, false);
     }
-  }, 30000);
+  }, 45000);
 
-  // Control de desconexión y bucle de reconexión
+  // Reconexión limpia si se interrumpe la red
   bot.on('end', (reason) => {
-    console.log(`Conexión finalizada (${reason}). Reintentando en 30 segundos...`);
+    console.log(`Conexión cerrada (${reason}). Reintentando en 30 segundos...`);
     clearInterval(activityInterval);
     setTimeout(startBot, 30000);
   });
 
   bot.on('kicked', (reason) => {
-    console.log('El bot fue expulsado por:', reason);
+    console.log('Expulsado:', reason);
   });
 
   bot.on('error', (err) => {
-    console.log('Error de red detectado:', err.message);
+    console.log('Error de red:', err.message);
   });
 }
 
