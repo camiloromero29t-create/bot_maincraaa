@@ -13,11 +13,10 @@ function startBot() {
   });
 
   bot.on('spawn', () => {
-    console.log('¡Botsitouu se ha conectado al servidor!');
+    console.log('¡Botsitouu oike porãma servidor-pe!');
     
     setTimeout(() => {
       bot.chat('/login botafk2926');
-      console.log('Comando /login enviado con éxito');
     }, 2000);
   });
 
@@ -29,11 +28,10 @@ function startBot() {
     }
   });
 
-  // Interacción suave: Balancea el brazo y mueve la cámara (No activa el anticheat)
+  // Ko'ápe bot omeyva'erã ijjyva ha omaña mombyry (¡ko'ãva ndaha'ei hack Grim-pe guarã!)
   setInterval(() => {
     if (bot && bot.entity) {
-      bot.swingArm('right'); // Mueve el brazo
-      // Mueve ligeramente la cabeza (pitch y yaw) para simular presencia
+      bot.swingArm('right'); 
       const yaw = Math.random() * Math.PI * 2;
       const pitch = (Math.random() - 0.5) * Math.PI;
       bot.look(yaw, pitch, false);
@@ -41,11 +39,10 @@ function startBot() {
   }, 20000);
 
   bot.on('end', () => {
-    console.log('Conexión cerrada. Reintentando en 15 segundos...');
     setTimeout(startBot, 15000);
   });
 
-  bot.on('error', err => console.log('Error del bot:', err));
+  bot.on('error', err => console.log('Error:', err));
 }
 
 startBot();
