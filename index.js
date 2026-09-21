@@ -25,16 +25,16 @@ function startBot() {
     
     // Autenticación automática tras 3 segundos
     setTimeout(() => {
-      bot.chat('/login botafk292');
+      bot.chat('/login botafk2926');
     }, 3000);
   });
 
   // Intercepción de mensajes del chat para LoginPlus
   bot.on('messagestr', (message) => {
     if (message.includes('/register')) {
-      bot.chat('/register botafk292 botafk292');
+      bot.chat('/register botafk2926 botafk2926');
     } else if (message.includes('/login')) {
-      bot.chat('/login botafk292');
+      bot.chat('/login botafk2926');
     }
   });
 
